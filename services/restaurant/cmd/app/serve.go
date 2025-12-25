@@ -41,9 +41,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 	restaurantHandler := httpserver.NewRestaurantHandler(restaurantSvc)
 	server := httpserver.NewServer(restaurantHandler)
 
-	log.Printf("Starting server on :%d", port)
+	log.Printf("Starting app on :%d", port)
 	if err = http.ListenAndServe(fmt.Sprintf(":%d", port), server.Router()); err != nil {
-		return fmt.Errorf("server failed: %w", err)
+		return fmt.Errorf("app failed: %w", err)
 	}
 
 	return nil
