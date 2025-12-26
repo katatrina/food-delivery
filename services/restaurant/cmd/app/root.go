@@ -5,7 +5,6 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "restaurant",
 	Short: "Restaurant service for food delivery platform",
 }
 

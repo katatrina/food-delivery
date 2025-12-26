@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"github.com/katatrina/food-delivery/services/restaurant/internal/infra/postgres"
 	"github.com/katatrina/food-delivery/services/restaurant/internal/service"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var serveCmd = &cobra.Command{
@@ -28,13 +30,28 @@ func init() {
 func runServe(cmd *cobra.Command, args []string) error {
 	port, _ := cmd.Flags().GetInt("port")
 
+	viper.SetConfigType("env")
+	viper.AddConfigPath(".")
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		var configErr viper.ConfigFileNotFoundError
+		if !errors.As(err, &configErr) {
+			return fmt.Errorf("failed to load config: %w\n", err)
+		}
+	}
+
 	ctx := context.Background()
 
-	pool, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
+	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		return fmt.Errorf("failed to connect to database: %w", err)
+		return fmt.Errorf("failed to create db connection pool: %w", err)
 	}
 	defer pool.Close()
+
+	if err = pool.Ping(ctx); err != nil {
+		return fmt.Errorf("failed to connect to database: %w", err)
+	}
 
 	store := postgres.NewStore(pool)
 	restaurantSvc := service.NewRestaurantService(store)
